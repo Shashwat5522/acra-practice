@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,9 +14,9 @@ import (
 
 type User struct {
 	ID       int
-	Name     string
-	Email    string
-	Password string
+	Name     string 	`json:"name"`
+	Email    string		`json:"email"`
+	Password string		`json:"password"`
 }
 
 func main() {
@@ -38,31 +39,47 @@ func main() {
 
 	})
 	http.HandleFunc("/add-data", func(w http.ResponseWriter, r *http.Request) {
-		_, err := db.Exec(`INSERT INTO  users(id,name,email,password) VALUES(1,'test','test@gmail.com','test@123');`)
-		if err != nil {
-			log.Fatal(err)
-		}
+		var user User
+
+    err := json.NewDecoder(r.Body).Decode(&user)
+    if err != nil {
+        log.Fatal(err)
+        http.Error(w, "Invalid request body", http.StatusBadRequest)
+        return
+    }
+
+    // Use a prepared statement to insert data into the database
+    InsertQuery := "INSERT INTO users(name, email, password) VALUES($1, $2, $3);"
+
+    // Execute the prepared statement with user data as parameters
+    _, ierr := db.Exec(InsertQuery, user.Name, user.Email, user.Password)
+    if ierr != nil {
+        log.Fatal(ierr)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+
+    // Send a success response to the client
+    w.WriteHeader(http.StatusCreated)
+    fmt.Fprintln(w, "Data successfully inserted into the database")
 
 	})
 	http.HandleFunc("/get-data", func(w http.ResponseWriter, r *http.Request) {
+		var users []User
 		rows, err := db.Query("SELECT * from users")
 		if err != nil {
 			log.Fatal(err)
 		}
-		type Row struct {
-			ID       int
-			Name     string
-			Email    string
-			Password string
-		}
+		
 		for rows.Next() {
-			var row Row
-			err := rows.Scan(&row.ID, &row.Name, &row.Email, &row.Password)
+			var user User
+			err := rows.Scan(&user.ID,&user.Name, &user.Email, &user.Password)
+
 
 			if err != nil {
 				log.Fatal(err)
 			}
-
+			users=append(users, user)
 			// // Remove escape characters and decode hexadecimal strings
 			// cleanedEmail := strings.ReplaceAll(row.Email, "\\x", "")
 			// cleanedPassword := strings.ReplaceAll(row.Password, "\\x", "")
@@ -75,9 +92,12 @@ func main() {
 			// if err != nil {
 			// 	log.Fatal(err)
 			// }
-
-			fmt.Println(row.ID, " ", row.Name, " ", row.Email," ",row.Password)
+			
+				
 		}
+		fmt.Print(users)
+				w.WriteHeader(200)
+				fmt.Fprint(w,users)
 	})
 
 	http.HandleFunc("/get-one",func(w http.ResponseWriter,r *http.Request){
