@@ -1,0 +1,7 @@
+version: 0.92.0
+
+client_id: practice_acra_server
+
+db_host: postgresql
+db_port: 5432
+logging_level: debug

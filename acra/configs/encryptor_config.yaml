@@ -1,0 +1,18 @@
+version: 0.92.0
+schemas:
+  - table: users
+    columns:
+      - id
+      - name
+      - email
+      - password
+    encrypted:
+      - column: password
+        tokenized: true
+        consistent_tokenization: true
+        token_type: str
+      - column: email
+        tokenized: true
+        consistent_tokenization: false
+        token_type: email
+
