@@ -1,4 +1,4 @@
-version: 0.92.0
+version: 0.95.0
 schemas:
   - table: users
     columns:
@@ -6,13 +6,30 @@ schemas:
       - name
       - email
       - password
+      - creditcard
+      
     encrypted:
       - column: password
         tokenized: true
         consistent_tokenization: true
         token_type: str
+
       - column: email
         tokenized: true
         consistent_tokenization: false
         token_type: email
+
+      
+
+      - column: creditcard
+
+        masking: "XXXXXXXXXXXX"
+
+        plaintext_length: 3
+
+        plaintext_side: "right" 
+
+        
+        
+        
 
